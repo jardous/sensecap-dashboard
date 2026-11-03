@@ -4,6 +4,9 @@
   "lvgl": "8.3.1 (bundled in Seeed ESP32 repository)",
   "repositories": [
     {"path": "vendor/seeed-esp32", "url": "https://github.com/Seeed-Solution/SenseCAP_Indicator_ESP32.git", "commit": "77edb8d2b9a92fc67965c1b2d4a838f0d09a1800"},
-    {"path": "vendor/seeed-rp2040", "url": "https://github.com/Seeed-Solution/SenseCAP_Indicator_RP2040.git", "commit": "8b4091127994c5bf1f4d1b5371c32436eca67be8"}
+    {"path": "vendor/seeed-rp2040", "url": "https://github.com/Seeed-Solution/SenseCAP_Indicator_RP2040.git", "commit": "8b4091127994c5bf1f4d1b5371c32436eca67be8"},
+    {"path": "vendor/RadioLib", "url": "https://github.com/jgromes/RadioLib.git", "commit": "d26b1ff38e2fbdced7d79689662dbd162fa54070"},
+    {"path": "vendor/esp-protocols", "url": "https://github.com/espressif/esp-protocols.git", "commit": "1750a3fda9c99a9545379f89c6bb49a86615cfaa"},
+    {"path": "vendor/cJSON", "url": "https://github.com/DaveGamble/cJSON.git", "commit": "d348621ca93571343a56862df7de4ff3bc9b5667"}
   ]
 }

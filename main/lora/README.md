@@ -1,17 +1,15 @@
-# External LoRa extension boundary
+# D1S external LoRa client
 
-No radio driver is initialized for D1S. No gateway client is linked in v0.1.
-Keep three future adapters separate:
+`client.cpp` connects to the separate **XIAO ESP32-S3 + Wio-SX1262** receiver over
+authenticated local WebSocket. D1S has no SX1262, links no RadioLib, and
+initializes no local radio.
 
-* Meshtastic MQTT: decode only that protocol, with explicit channel authorization.
-* RNode/Reticulum: use the Linux bridge's supported interface/radio statistics.
-* Raw LoRa: documented custom gateway JSON schema; only decoded packets from the
-  configured frequency/modulation, never a claim to decode all RF activity.
+The worker/callback own networking and a fixed assembler, 16-event telemetry
+queue and single-slot radio-configuration queue. The UI owner calls `poll()` to
+drain up to eight events, then renders portable `sniffer::State`. All radio
+commands are receive-configuration only; no TX/replay/injection operations exist.
 
-Normalize optional values: `frequency_hz`, `bandwidth_hz`, `spreading_factor`,
-`coding_rate`, `rssi_dbm`, `snr_db`, `rx_packets`, `tx_packets`, `received_at_unix`.
-Missing fields remain unavailable. Bound packet/event buffers, reject duplicate
-events, expire stale configuration. Build the signal timeline from genuine
-gateway events, not a random waterfall. Europe 868 MHz is a gateway profile, not
-a hardcoded assumption that all frequencies/modulations are lawful everywhere.
-No transmit operations should be exposed by the initial adapter.
+See [setup and verification](../../docs/lora.md),
+[schema](../../docs/lora-protocol.md), and [XIAO project](../../lora-sniffer/README.md).
+This is raw receiver telemetry with conservative payload classification, **not**
+a Meshtastic MQTT client, RNode serial adapter or decrypting protocol gateway.

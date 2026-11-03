@@ -1,6 +1,8 @@
 #include "platform.hpp"
 #include "display/port.h"
 #include "ui/dashboard.hpp"
+#include "lora/client.hpp"
+#include "config/usb_setup.hpp"
 #include "lvgl.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,7 +15,10 @@ extern "C" void app_main() {
     model.settings = dash::platform::load_settings();
     display_init();
     dash::platform::apply_backlight(model.settings.brightness);
+    dash::platform::start_screen_button();
     dash::platform::start(model.settings);
+    dash::lora::start(model.settings.sniffer);
+    dash::config::start_usb_setup(model.settings.sniffer);
     dash::ui::create(model);
     uint64_t rendered = 0, published = 0;
     uint64_t performance_at = 0;
@@ -25,6 +30,8 @@ extern "C" void app_main() {
             model.history.add(sample);
         }
         const auto now = dash::platform::now_ms();
+        if (dash::platform::take_screen_toggle()) dash::ui::toggle_screen();
+        dash::lora::poll(model.lora);
         if (now - rendered >= model.settings.refresh_ms) {
             dash::platform::network_snapshot(model.network);
             dash::ui::refresh(now); rendered = now;

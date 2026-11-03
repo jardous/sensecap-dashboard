@@ -33,8 +33,11 @@ settings callbacks → validated draft → single-slot settings queue
 | `main/sensors` | UART driver and acquisition task; never calls LVGL |
 | `main/network` | Wi-Fi events/reconnect, IP/DNS, MQTT, time, snapshots |
 | `main/monitor` | IPv4 DNS/TCP and certificate-verified HTTP HEAD checks |
-| `main/config` | Validated versioned NVS settings; never erases unknown NVS |
-| `main/reticulum`, `main/lora` | Documented optional extension boundaries, not active clients |
+| `main/config` | Validated NVS settings and bounded UART0 USB link setup; never erases unknown NVS |
+| `main/reticulum` | Deferred optional bridge client |
+| `main/lora` | D1S authenticated WebSocket worker and bounded event/config queues; no radio |
+| `shared/lora` | Portable wire schema, state/history and conservative classifiers |
+| `lora-sniffer` | Independent XIAO ESP-IDF app; SX1262 RX task, guarded HAL, authenticated server |
 | `bridge` | Independent read-only Linux status service and tests |
 | `desktop` | Same C++ model/UI; SDL framebuffer + explicit synthetic fixtures |
 
@@ -94,14 +97,14 @@ Network online means the configured service responded, not an inferred CPU state
 DNS lookup is included in observed latency. Interface clients are not RNS peers;
 RNS destinations are not LXMF peers. There is no universal raw-LoRa decoder.
 
-## Optional-module plan
+## External modules
 
 Reticulum consumes the bridge's schema-1 allowlist over authenticated HTTPS in a
 dedicated worker; null fields remain unavailable. LXMF needs a separate explicit
-source and authorization. LoRa gets independent Meshtastic, RNode/Reticulum and
-raw custom-gateway parsers, event deduplication and a genuine receive-event signal
-timeline. EU868 is a validated gateway profile, not a transmitter setting on D1S.
-Neither client is compiled into this initial firmware. See module READMEs.
+source and authorization; this Reticulum client remains deferred. LoRa now uses
+the separate XIAO receiver and bounded D1S WebSocket client, portable schema/state
+and Probable/Unknown payload classifiers. The radio never runs on D1S. See
+[LoRa architecture, ownership, security and test boundary](lora.md).
 
 Remote telemetry is likewise deferred: future adapters must carry source,
 timestamp, units, schema and freshness; cap packet sizes and never reinterpret

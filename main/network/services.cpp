@@ -15,12 +15,15 @@
 #include "freertos/task.h"
 #include <cstdio>
 #include <cstring>
+#include <atomic>
 
 namespace dash::platform {
 static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static NetworkState state;
 static Settings settings;
 static QueueHandle_t save_queue, publish_queue;
+struct SaveRequest { Settings settings; bool sniffer_only=false; };
+static std::atomic<bool> save_busy{false};
 static esp_mqtt_client_handle_t mqtt;
 static esp_netif_t* station;
 static bool led_ready = false;
@@ -77,7 +80,16 @@ void apply_backlight(uint8_t percent) {
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
 }
 bool save_settings(const Settings& s) {
-    return validate_settings(s) && xQueueSend(save_queue, &s, 0) == pdTRUE;
+    if (!validate_settings(s) || save_busy.exchange(true)) return false;
+    const SaveRequest request{s,false};
+    if (xQueueSend(save_queue,&request,0)==pdTRUE) return true;
+    save_busy=false; return false;
+}
+bool provision_sniffer_link(const sniffer::ClientSettings& s) {
+    if (!sniffer::valid(s) || save_busy.exchange(true)) return false;
+    SaveRequest request{settings,true}; request.settings.sniffer=s;
+    if (xQueueSend(save_queue,&request,0)==pdTRUE) return true;
+    save_busy=false; return false;
 }
 void publish(const ViewModel& model) {
     Telemetry t{model.readings, now_ms()}; xQueueOverwrite(publish_queue, &t);
@@ -113,17 +125,25 @@ static void service(void*) {
     unsigned failures = 0;
     bool ntp_started = false;
     for (;;) {
-        Settings candidate;
-        if (xQueueReceive(save_queue, &candidate, 0) == pdTRUE) {
+        SaveRequest request;
+        if (xQueueReceive(save_queue, &request, 0) == pdTRUE) {
+            const auto& candidate=request.settings;
             nvs_handle_t handle;
             esp_err_t err = nvs_open("dashboard", NVS_READWRITE, &handle);
             if (err == ESP_OK) {
-                err = nvs_set_blob(handle, "settings", &candidate, sizeof(candidate));
+                if (!request.sniffer_only) err = nvs_set_blob(handle, "settings", static_cast<const CoreSettings*>(&candidate), sizeof(CoreSettings));
+                if (err == ESP_OK) err = nvs_set_blob(handle, "lora_v1", &candidate.sniffer, sizeof(candidate.sniffer));
                 if (err == ESP_OK) err = nvs_commit(handle);
                 nvs_close(handle);
             }
-            if (err == ESP_OK) { ESP_LOGI("config", "Saved; rebooting"); vTaskDelay(pdMS_TO_TICKS(300)); esp_restart(); }
-            else ESP_LOGE("config", "Save failed: %s", esp_err_to_name(err));
+            if (err == ESP_OK) {
+                if (request.sniffer_only) ESP_LOGI("usb_setup","DASH_USB_LINK_SAVED; rebooting");
+                else ESP_LOGI("config", "Saved; rebooting");
+                vTaskDelay(pdMS_TO_TICKS(300)); esp_restart();
+            } else {
+                if (request.sniffer_only) ESP_LOGE("usb_setup","DASH_USB_LINK_FAILED");
+                ESP_LOGE("config", "Save failed: %s", esp_err_to_name(err)); save_busy=false;
+            }
         }
         if (settings.ssid[0] && !wifi_connected() && now_ms() >= retry_at) {
             // Connect is asynchronous; bounded exponential backoff, no event-loop sleeps.
@@ -166,7 +186,7 @@ static void service(void*) {
 }
 void start(const Settings& s) {
     settings = s;
-    save_queue = xQueueCreate(1, sizeof(Settings)); publish_queue = xQueueCreate(1, sizeof(Telemetry));
+    save_queue = xQueueCreate(1, sizeof(SaveRequest)); publish_queue = xQueueCreate(1, sizeof(Telemetry));
     configASSERT(save_queue && publish_queue);
     ESP_ERROR_CHECK(esp_netif_init()); ESP_ERROR_CHECK(esp_event_loop_create_default());
     station = esp_netif_create_default_wifi_sta(); configASSERT(station);

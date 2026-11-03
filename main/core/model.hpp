@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cmath>
+#include "lora/protocol.hpp"
 
 namespace dash {
 enum class Metric : uint8_t { Temperature, Humidity, Co2, Voc, Count };
@@ -77,13 +78,16 @@ struct NetworkState {
     bool mqtt_connected = false;
     std::array<HostState, 4> hosts{};
 };
-struct Settings {
+// Keep this exact v1 layout for existing NVS blobs, independent of extensions.
+struct CoreSettings {
     uint32_t version = 1;
     char ssid[33] = "", wifi_password[65] = "";
     char mqtt_uri[160] = "", mqtt_user[64] = "", mqtt_password[96] = "";
     char device_id[32] = "sensecap";
     uint32_t publish_seconds = 30, refresh_ms = 1000, stale_ms = 20000;
-    uint16_t screen_timeout_s = 120, rotation_s = 0;
+    // Retain the old timeout field/layout for NVS compatibility; blanking is
+    // now exclusively controlled by the physical button, even for old blobs.
+    uint16_t screen_timeout_s = 0, rotation_s = 0;
     uint8_t brightness = 85;
     Thresholds limits{};
     std::array<HostConfig, 4> hosts{};
@@ -91,11 +95,15 @@ struct Settings {
     char lora_topic[128] = "";
     char ntp_server[128] = ""; // optional local NTP; no public internet dependency
 };
+struct Settings : CoreSettings {
+    sniffer::ClientSettings sniffer{}; // separate NVS key, never invalidates climate/Wi-Fi settings
+};
 bool validate_settings(const Settings& settings);
 struct ViewModel {
     std::array<Reading, metric_count> readings{};
     History history;
     NetworkState network;
+    sniffer::State lora;
     Settings settings;
     bool simulated = false;
     uint32_t dropped_samples = 0;

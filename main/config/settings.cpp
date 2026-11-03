@@ -13,11 +13,14 @@ Settings load_settings() {
     nvs_handle_t handle;
     if (nvs_open("dashboard", NVS_READONLY, &handle) != ESP_OK) return settings;
     Settings candidate;
-    size_t size = sizeof(candidate);
-    const auto result = nvs_get_blob(handle, "settings", &candidate, &size);
-    nvs_close(handle);
-    if (result == ESP_OK && size == sizeof(candidate) && validate_settings(candidate)) settings = candidate;
+    size_t size = sizeof(CoreSettings);
+    const auto result = nvs_get_blob(handle, "settings", static_cast<CoreSettings*>(&candidate), &size);
+    if (result == ESP_OK && size == sizeof(CoreSettings) && validate_settings(candidate)) settings = candidate;
     else if (result != ESP_ERR_NVS_NOT_FOUND) ESP_LOGW("config", "Ignoring invalid/old settings");
+    sniffer::ClientSettings lora;
+    size = sizeof(lora);
+    if (nvs_get_blob(handle, "lora_v1", &lora, &size) == ESP_OK && size == sizeof(lora) && sniffer::valid(lora)) settings.sniffer = lora;
+    nvs_close(handle);
     return settings;
 }
 }

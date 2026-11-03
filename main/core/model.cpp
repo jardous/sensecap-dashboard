@@ -134,6 +134,6 @@ bool validate_settings(const Settings& s) {
         if (h.address[0] && h.check == Check::Http &&
             std::strncmp(h.address, "http://", 7) && std::strncmp(h.address, "https://", 8)) return false;
     }
-    return true;
+    return sniffer::valid(s.sniffer);
 }
 } // namespace dash

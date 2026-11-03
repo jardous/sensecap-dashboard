@@ -96,3 +96,67 @@ Measured touch reads231–254µs, steady-window LVGL handler maxima48.4–52.8ms
 flush maxima20.1–22.8ms (initial startup peak106.4ms handler). User then explicitly
 confirmed **“Responsive now”**, including prompt taps/typing and stable display.
 These measurements do not constitute a physical touch-to-photon benchmark.
+
+## Network host editor and modal input isolation
+
+The user subsequently reported host long-press opening the wrong configuration
+window and background tab buttons flickering while an overlay was visible.
+
+Two UI causes were identified independently of RGB scanout/timing:
+
+* Every host's long-press callback opened the general settings form without a
+  host index. It now opens a dedicated four-field editor for the selected slot;
+  Save preserves all other settings. Short-click opens host details/Edit, or
+  directly edits an empty slot. `LV_EVENT_SHORT_CLICKED` separates this from the
+  click-on-release emitted after a long press.
+* Overlays previously covered only their own rectangle. `navigate()` refused
+  page changes while a modal existed, but exposed tabs could still receive input
+  and display their pressed style. All overlays now share a full-screen,
+  transparent clickable shield. It blocks input/gesture propagation without
+  adding dimming/fades or changing the accepted display/memory settings. The
+  keyboard is parented above the modal within that shield. Opening/closing waits
+  for the current pointer release to prevent click-through.
+
+Desktop regression tests drive the actual LVGL pointer: long-press all four
+hosts, check the selected editor's values, cancel without mutation, save only
+one slot, exercise short-click/Edit, and press a background tab while a modal is
+open. They require no background pressed state/navigation and identical tab
+framebuffer pixels before/during the blocked press. All six normal and six
+ASan/UBSan suites passed, and the corrective firmware was uploaded with all three
+image hashes verified. Current NVS was privately snapshotted before upload; a
+30-second boot capture confirmed 120MHz PSRAM, memory test OK, real sensor input
+and successful local Wi-Fi/DHCP. Physical confirmation of the two UI fixes is
+still pending user interaction.
+
+## Intermittent window flashing after USB pairing
+
+User describes irregular window flashing like a stuck input/pressed key; there
+is no clear idle/tab/settings correlation yet. This is not established as serial
+interference or a recurrence of the original scanout problem. Source/pin review:
+
+* XIAO native USB Serial/JTAG is a separate chip/device from the SenseCAP.
+* SenseCAP's setup listener uses UART0 (default console GPIO43/44); RP2040 data
+  uses UART2 GPIO19/20; neither overlaps the D1S RGB panel pins.
+* LVGL registers only a touch pointer here, not a USB/serial keyboard. UART setup
+  cannot inject key/touch/navigation events. The listener never calls LVGL.
+* The touch adapter initializes each sample to released; the BSP also has an
+  error-triggered touch reset. No proof of a ghost/stuck touch or its cause was
+  obtained from source inspection. The existing full-screen modal input shield
+  and release suppression remain in place.
+* The CRC-checked NVS snapshot made after USB pairing has page rotation0 (off).
+  This is the saved snapshot, not a live observation of subsequent UI edits.
+
+Do not claim a fix or change accepted120MHz PSRAM/XIP, panel/input10ms, render33ms,
+UI priority5 or panel porch timings on this evidence. Next useful measurement is
+privacy-safe touch transition/held-duration/read-error counters correlated with
+navigation events, plus checking auto-page rotation and power/reset events while
+the symptom is reproduced. No SenseCAP reflash was performed for XIAO diagnostics.
+
+Follow-up: the user correlated rapid page switching with host test runs and
+explicitly identified the **physical SenseCAP**, not desktop windows. The current
+simulator's `--self-test` returns before SDL window creation and opens no hardware
+serial endpoint; no interactive simulator was running when checked. This does
+not explain or disprove the user's correlation. Extra page-change tracing was
+proposed but not included when the user requested the button-only blanking upload.
+That upload disables idle blanking and implements GPIO38 button blank/wake; it
+does not claim a fix for intermittent page switching. Panel timing is unchanged.

@@ -5,7 +5,8 @@ set(EXTRA_COMPONENT_DIRS
     "${CMAKE_CURRENT_LIST_DIR}/vendor/seeed-esp32/components/i2c_devices"
     "${CMAKE_CURRENT_LIST_DIR}/vendor/seeed-esp32/components/iot_button"
     "${CMAKE_CURRENT_LIST_DIR}/vendor/seeed-esp32/components/lora"
-    "${CMAKE_CURRENT_LIST_DIR}/vendor/seeed-esp32/components/lvgl")
+    "${CMAKE_CURRENT_LIST_DIR}/vendor/seeed-esp32/components/lvgl"
+    "${CMAKE_CURRENT_LIST_DIR}/vendor/esp-protocols/components/esp_websocket_client")
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 set(PROJECT_VER "0.1.0")
 project(sensecap_dashboard VERSION 0.1.0)

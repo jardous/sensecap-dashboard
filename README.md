@@ -1,8 +1,8 @@
 # SenseCAP / Smart Dashboard
 
 Native C++17 / ESP-IDF **5.1.6** / LVGL **8.3.1** application for Seeed's
-SenseCAP Indicator **D1S**. Climate-first v0.1 development milestone, with a shared
-desktop renderer, real RP2040 sensor input, and local network checks.
+SenseCAP Indicator **D1S**, with a shared desktop renderer, real RP2040 sensor
+input, local network checks and an independently buildable passive XIAO LoRa receiver.
 
 ![Climate — explicit desktop simulation](docs/previews/climate.png)
 
@@ -30,16 +30,33 @@ The follow-up input-scheduling build was also flashed and user-confirmed
 * Wi-Fi reconnect/backoff, IP/gateway/DNS/RSSI, uptime, heap and MQTT status.
 * Four configurable TCP or HTTP HEAD health checks, latency charts and last-success
   information in host details. Monitoring runs outside the UI task.
-* NVS configuration, on-screen keyboard, brightness, timeout, optional page rotation,
+* NVS configuration, on-screen keyboard, brightness, physical-button-only screen
+  blank/wake (no idle blanking), optional page rotation,
   thresholds, MQTT publishing and optional local NTP for TLS certificate validation.
 * Independent, authenticated, read-only Linux Reticulum bridge and security tests.
+* [Passive XIAO ESP32-S3 + Wio-SX1262 receiver](docs/lora.md), authenticated local
+  WebSocket telemetry and D1S LoRa UI: fixed/scan/CAD modes, bounded history,
+  RSSI/SNR, activity, raw HEX and conservative classification. **Both devices
+  flashed; XIAO received three CRC-valid packets on Meshtastic EU868 Long Fast.
+  Dashboard connection and basic packet display confirmed by the user;
+  sequence comparison and long-run reliability still need acceptance.**
 * SDL desktop LVGL simulator; **synthetic data only with `--simulate`**.
+* LoRa settings redesign (flashed and boot-checked; physical UI confirmation pending): Connection and
+  Receiver sections, switches/presets, readable units and separate apply/save
+  actions. [Connection preview](docs/previews/lora-settings-connection.png) ·
+  [Receiver preview](docs/previews/lora-settings-receiver.png).
+* SenseCAP USB pairing: load the XIAO access token directly from a private file,
+  without typing it. Narrow link-only NVS update preserves Wi-Fi/host/radio settings;
+  see [setup](docs/lora.md).
+* XIAO USB diagnostics: inspect live Wi-Fi signal, IP, retries and disconnect
+  reasons without Wi-Fi or a token via `scripts/sniffer-serial.py watch`.
+  See [USB commands](lora-sniffer/README.md#usb-connection-diagnostics).
 
 ## Deliberately deferred
 
-The Reticulum and LoRa **device clients**, remote CPU/memory/disk telemetry input,
+The Reticulum **device client**, remote CPU/memory/disk telemetry input,
 MQTT Home Assistant auto-discovery, ICMP, OTA and SD-backed history are later
-milestones. Reticulum/LoRa tabs show honest inactive-module information. The bridge
+milestones. The Reticulum tab shows honest inactive-module information. The bridge
 exists independently; its URL/token settings are reserved, not an active client.
 There is no LoRa transmission or internal SX1262 initialization on D1S. Host checks
 are TCP connect / HTTP HEAD, not ping and not proof an entire machine is healthy.
@@ -55,7 +72,7 @@ python3 scripts/bootstrap.py
 bash scripts/build.sh
 ```
 
-`vendor.lock.json` pins both official repositories and the IDF image digest.
+`vendor.lock.json` pins upstream repositories and the IDF image digest.
 Bootstrap refuses to discard existing vendor changes. The BSP/LVGL remain upstream
 code. Vendor-only legacy format warnings are documented in
 [hardware findings](docs/hardware.md); application warnings remain strict.
@@ -95,7 +112,7 @@ credentials. Headless screenshot/self-test mode needs neither a screen nor SDL
 video initialization. Previews are actual software-rendered **shared LVGL code**,
 not design illustrations. They are not device photographs.
 
-Core-only tests without SDL/vendor checkout:
+Core-only tests without SDL (run bootstrap first for pinned cJSON):
 
 ```sh
 cmake -S desktop -B build-core -DDASH_BUILD_SIMULATOR=OFF
@@ -118,6 +135,9 @@ LVGL process-lifetime allocations can be excluded from leak checking with
 4. Add host friendly names/addresses. For TCP use an IPv4 address or hostname and
    port. For HTTP choose check `1` and enter a full `http://...` or `https://...`
    URL, including the port/path. HTTP uses the URL's port, not the TCP port field.
+   On Network, long-press a host to edit **that host only**. Short-tap a configured
+   host for details and its Edit button; short-tap an empty slot to configure it.
+   Overlays block background taps/swipes until closed.
 5. For MQTT set `mqtt://broker:1883` or certificate-verified `mqtts://...:8883`,
    credentials and a unique device ID. See [MQTT payloads](docs/mqtt.md) and
    [Home Assistant example](examples/home-assistant.yaml).
@@ -169,6 +189,8 @@ certificate checks; custom-CA UI provisioning is not implemented yet.
 * [Backup, ESP32 flashing and RP2040 recovery](docs/flashing.md)
 * [MQTT contract / Home Assistant](docs/mqtt.md)
 * [Reticulum bridge deployment](bridge/README.md)
+* [XIAO LoRa setup, receive-only boundary and verification](docs/lora.md)
+* [LoRa WebSocket protocol](docs/lora-protocol.md)
 * [Milestones and verification](docs/verification.md)
 * [Network preview](docs/previews/network.png) · [Unavailable sensors](docs/previews/unavailable.png)
 
