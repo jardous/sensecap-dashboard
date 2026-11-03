@@ -1,0 +1,9 @@
+{
+  "note": "Reference for on-device settings; not an automatic JSON importer. Example IPs are documentation-only.",
+  "hosts": [
+    {"name": "Router", "address": "192.0.2.1", "port": 80, "check": 0},
+    {"name": "Home Assistant", "address": "http://192.0.2.10:8123/", "port": 8123, "check": 1},
+    {"name": "Pi-hole", "address": "192.0.2.2", "port": 53, "check": 0},
+    {"name": "Linux server", "address": "server.example.internal", "port": 22, "check": 0}
+  ]
+}

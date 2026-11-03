@@ -1,0 +1,14 @@
+/build*/
+/sdkconfig
+/sdkconfig.old
+/vendor/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.token
+/secrets/
+/backups/

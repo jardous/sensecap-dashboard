@@ -1,0 +1,27 @@
+# Template only: install under /etc/systemd/system after editing paths/user.
+# Run as the existing authorized unprivileged RNS account, not root.
+[Unit]
+Description=SenseCAP read-only Reticulum bridge
+After=network.target
+
+[Service]
+Type=simple
+User=reticulum
+Group=reticulum
+ExecStart=/usr/bin/python3 /opt/sensecap-dashboard/bridge/bridge.py --bind 127.0.0.1 --allow 127.0.0.1/32 --token-file /etc/sensecap-bridge/token --rnstatus /opt/rns-venv/bin/rnstatus --rns-config /var/lib/reticulum
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/reticulum /etc/sensecap-bridge
+RestrictAddressFamilies=AF_INET AF_UNIX
+CapabilityBoundingSet=
+LockPersonality=true
+UMask=0077
+MemoryMax=128M
+TasksMax=16
+
+[Install]
+WantedBy=multi-user.target

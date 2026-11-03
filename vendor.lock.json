@@ -1,0 +1,9 @@
+{
+  "esp_idf": "5.1.6",
+  "idf_image": "espressif/idf:v5.1.6@sha256:1b161db010c4d6d104856e898824a141b17b9a0ffff4411aa8ba59db7f936817",
+  "lvgl": "8.3.1 (bundled in Seeed ESP32 repository)",
+  "repositories": [
+    {"path": "vendor/seeed-esp32", "url": "https://github.com/Seeed-Solution/SenseCAP_Indicator_ESP32.git", "commit": "77edb8d2b9a92fc67965c1b2d4a838f0d09a1800"},
+    {"path": "vendor/seeed-rp2040", "url": "https://github.com/Seeed-Solution/SenseCAP_Indicator_RP2040.git", "commit": "8b4091127994c5bf1f4d1b5371c32436eca67be8"}
+  ]
+}

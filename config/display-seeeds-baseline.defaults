@@ -1,0 +1,10 @@
+# Explicit overlay for updating an existing sdkconfig during a display recovery
+# build. Matches the official indicator_basis memory and panel scanout settings.
+CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+CONFIG_SPIRAM_SPEED_120M=y
+# CONFIG_SPIRAM_SPEED_80M is not set
+CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y
+CONFIG_SPIRAM_RODATA=y
+CONFIG_ESPTOOLPY_FLASHFREQ_120M=y
+# CONFIG_ESPTOOLPY_FLASHFREQ_80M is not set
+CONFIG_LCD_TASK_REFRESH_TIME=10

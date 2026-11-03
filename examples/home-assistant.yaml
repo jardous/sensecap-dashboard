@@ -1,0 +1,55 @@
+# Merge into Home Assistant configuration.yaml; change sensecap to your device ID.
+# No Home Assistant discovery is required or published by firmware v0.1.
+mqtt:
+  sensor:
+    - name: SenseCAP Temperature
+      unique_id: sensecap_temperature
+      state_topic: sensecap/sensecap/state
+      value_template: "{{ value_json.temperature }}"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      expire_after: 90
+      availability_mode: all
+      availability:
+        - topic: sensecap/sensecap/availability
+        - topic: sensecap/sensecap/state
+          value_template: "{{ 'online' if value_json.temperature is number else 'offline' }}"
+    - name: SenseCAP Humidity
+      unique_id: sensecap_humidity
+      state_topic: sensecap/sensecap/state
+      value_template: "{{ value_json.humidity }}"
+      unit_of_measurement: "%"
+      device_class: humidity
+      state_class: measurement
+      expire_after: 90
+      availability_mode: all
+      availability:
+        - topic: sensecap/sensecap/availability
+        - topic: sensecap/sensecap/state
+          value_template: "{{ 'online' if value_json.humidity is number else 'offline' }}"
+    - name: SenseCAP CO2
+      unique_id: sensecap_co2
+      state_topic: sensecap/sensecap/state
+      value_template: "{{ value_json.co2 }}"
+      unit_of_measurement: ppm
+      device_class: carbon_dioxide
+      state_class: measurement
+      expire_after: 90
+      availability_mode: all
+      availability:
+        - topic: sensecap/sensecap/availability
+        - topic: sensecap/sensecap/state
+          value_template: "{{ 'online' if value_json.co2 is number else 'offline' }}"
+    - name: SenseCAP VOC Index
+      unique_id: sensecap_voc_index
+      state_topic: sensecap/sensecap/state
+      value_template: "{{ value_json.voc_index }}"
+      # Relative index: do NOT use a concentration device_class or ppb unit.
+      state_class: measurement
+      expire_after: 90
+      availability_mode: all
+      availability:
+        - topic: sensecap/sensecap/availability
+        - topic: sensecap/sensecap/state
+          value_template: "{{ 'online' if value_json.voc_index is number else 'offline' }}"
