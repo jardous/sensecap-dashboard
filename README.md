@@ -6,6 +6,10 @@ input, local network checks and an independently buildable passive XIAO LoRa rec
 
 ![Climate — explicit desktop simulation](docs/previews/climate.png)
 
+![LoRa monitor — explicit desktop simulation](docs/previews/lora-simulated.png)
+
+*LoRa monitor preview with simulated packets; not a live radio capture.*
+
 **This is not a hardware-qualified production release.** Builds and desktop tests
 are reproducible; see [verification](docs/verification.md) for actual hardware
 results and remaining acceptance work. Optional module clients are not silently
